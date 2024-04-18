@@ -1,0 +1,52 @@
+/* jumping dots animation */
+.jumping-dots span {
+  position: relative;
+  bottom: 0px;
+  -webkit-animation: jump 1500ms infinite;
+  animation: jump 2s infinite;
+}
+.jumping-dots .dot-1{
+  -webkit-animation-delay: 200ms;
+  animation-delay: 200ms;
+}
+.jumping-dots .dot-2{
+  -webkit-animation-delay: 400ms;
+  animation-delay: 400ms;
+}
+.jumping-dots .dot-3{
+  -webkit-animation-delay: 600ms;
+  animation-delay: 600ms;
+}
+
+@-webkit-keyframes jump {
+  0%   {bottom: 0px;}
+  20%  {bottom: 5px;}
+  40%  {bottom: 0px;}
+}
+
+@keyframes jump {
+  0%   {bottom: 0px;}
+  20%  {bottom: 5px;}
+  40%  {bottom: 0px;}
+}
+
+/* custom scrollbar */
+::-webkit-scrollbar {
+  width: 20px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #d6dee1;
+  border-radius: 20px;
+  border: 6px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a8bbbf;
+}
+
