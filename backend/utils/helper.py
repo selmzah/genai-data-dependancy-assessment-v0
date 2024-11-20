@@ -17,7 +17,6 @@ from .customprompt import (
     PROMPT_FUNCTION_EXPLANATION_FUNCTIONAL
 )
 
-
 class LLMHelper:
     def __init__(self,
                  llm_for_explanation: ChatOpenAI = None,
@@ -27,7 +26,7 @@ class LLMHelper:
                  max_tokens: int = None
                  ):
 
-        load_dotenv()
+        load_dotenv()  # Charger les variables d'environnement depuis .env
         openai.api_type = "azure"
         openai.api_base = os.getenv('OPENAI_API_BASE')
         openai.api_version = "2023-03-15-preview"
@@ -42,8 +41,8 @@ class LLMHelper:
         self.max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", -1)) if max_tokens is None else max_tokens
         self.usernameNeo4j: str = os.getenv("LOGIN_NEO4J", "neo4j")
         self.passwordNeo4j: str = os.getenv("PASSWORD_NEO4J", "pleaseletmein")
-        self.urlNeo4j: str = os.getenv("URL_NEO4J", "bolt://localhost:7687")
-
+        self.urlNeo4j: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")  # Utiliser NEO4J_URI
+        
         # LLM initialization upon the needs
         self.llm_for_explanation: ChatOpenAI = ChatOpenAI(
             model_name=self.deployment_name,
@@ -73,8 +72,10 @@ class LLMHelper:
         """
         Get connection for neo4j
         :return:
-        :rtype: str
+        :rtype: Neo4jGraph
         """
+        if not self.urlNeo4j:
+            raise Exception("NEO4J_URI is not set in the environment variables.")
         return Neo4jGraph(
             url=self.urlNeo4j, username=self.usernameNeo4j, password=self.passwordNeo4j
         )
@@ -209,7 +210,7 @@ class LLMHelper:
                     '", objective_functional:"' + element["Objective_functional"] +
                     '", file_name:"' + element["File_definition"] +
                     '"})')
-
+            
             for elements in node_list:
                 cypher_query_nodes = "CREATE " + elements
                 graph.query(cypher_query_nodes)

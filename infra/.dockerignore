@@ -1,0 +1,21 @@
+# Backend
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.DS_Store
+frontend/.env
+
+# Docker
+infra/.git/
+infra/.env
+infra/docker-compose.yml
+
+# Autres
+*.log
+*.tmp

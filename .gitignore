@@ -1,5 +1,5 @@
 venv/
-.env
+infra/.env
 frontend/templates/package-lock.json
 .idea
 

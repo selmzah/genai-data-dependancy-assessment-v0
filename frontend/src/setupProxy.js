@@ -1,11 +1,13 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
+// Utiliser la variable d'environnement pour définir le target
+const target = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-//      target: '10.0.1.5:5000',
-      target: 'http://localhost:5000',
+      target: target,
       changeOrigin: true,
     })
   );

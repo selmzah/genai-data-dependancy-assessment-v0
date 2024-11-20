@@ -6,40 +6,39 @@ from http import HTTPStatus
 from flask import Flask, request, session, jsonify, Response, send_file
 from docx import Document
 from werkzeug.datastructures.file_storage import FileStorage
+from flask_cors import CORS
 
 from utils.helper import LLMHelper
 from utils.document_generation import create_documentation
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+CORS(app)  # Permet les requêtes CORS depuis le frontend
+app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')  # Utiliser une clé secrète depuis .env
 
 api_base = "/api"
-
 
 @app.route(api_base)
 def index():
     session.clear()
-    return 'Backend is running'
-
+    return jsonify({"message": "Backend is running"}), HTTPStatus.OK
 
 @app.route(f'{api_base}/neo4j_healthcheck', methods=['GET'])
 def neo4j_healthcheck():
     llm_helper = LLMHelper()
     try:
         llm_helper.get_connection_neo4j()
-        return jsonify(status="ok", description="Neo4j is running!"), HTTPStatus.MULTI_STATUS
+        return jsonify(status="ok", description="Neo4j is running!"), HTTPStatus.OK
     except Exception as e:
+        logging.error(f"Neo4j Healthcheck Failed: {e}")
         return jsonify(
             status="ko",
             description="Neo4j is not running"
-        ), 404
-
+        ), HTTPStatus.NOT_FOUND
 
 @app.route(f'{api_base}/clear_session')
 def clear_session():
     session.clear()
     return 'Session cleared'
-
 
 @app.route(f'{api_base}/set_session_data')
 def set_session_data():
@@ -50,7 +49,6 @@ def set_session_data():
     session['data_files_embeddings'] = []
     return 'Session data set'
 
-
 @app.route(f'{api_base}/downloading', methods=['POST'])
 def download_docx_file() -> Response:
     """
@@ -59,18 +57,17 @@ def download_docx_file() -> Response:
     :rtype: Response
     """
     try:
-
         explanation = request.form['explanation']
         document = Document()
         document.add_paragraph(explanation)
         chemin_telechargement = os.path.join(os.path.expanduser('~'), 'Downloads')
 
-        document.save(chemin_telechargement + '/' + 'documentation.docx')
+        document.save(os.path.join(chemin_telechargement, 'documentation.docx'))
 
-        return jsonify({'explanation': 'Documment Created'})
+        return jsonify({'explanation': 'Document Created'})
     except Exception as e:
-        logging.error(f"Error generating code: {e}")
-
+        logging.error(f"Error generating document: {e}")
+        return jsonify({'error': 'Failed to create document'}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.route(f'{api_base}/explain_application', methods=['POST'])
 def explanation_with_graph():
@@ -101,7 +98,7 @@ def explanation_with_graph():
 
     except Exception as e:
         logging.error(f"Error explaining code: {e}")
-
+        return jsonify({'error': 'Failed to explain application'}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.route(f'{api_base}/chat', methods=['POST'])
 def info_functions():
@@ -111,7 +108,7 @@ def info_functions():
         if 'chat_question' not in session:
             session['chat_question'] = ''
         if 'chat_askedquestion' not in session:
-            session.chat_askedquestion = ''
+            session['chat_askedquestion'] = ''
         if 'chat_history' not in session:
             session['chat_history'] = []
         if 'chat_followup_questions' not in session:
@@ -126,8 +123,12 @@ def info_functions():
         return jsonify({'answer': result})
 
     except Exception as e:
-        logging.error(f"Error explaining code: {e}")
-
+        logging.error(f"Error in chat: {e}")
+        return jsonify({'error': 'Failed to process chat'}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == '__main__':
-    app.run()
+    app.run(
+        host=os.environ.get('FLASK_RUN_HOST', '0.0.0.0'),
+        port=int(os.environ.get('FLASK_RUN_PORT', 5000)),
+        debug=os.environ.get('FLASK_DEBUG', '0').lower() in ['1', 'true', 't']
+    )
