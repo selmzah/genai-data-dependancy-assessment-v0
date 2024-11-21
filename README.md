@@ -60,60 +60,16 @@ TODO
    ```sh
    git clone https://github.com/selmzah/genai-data-dependancy-assessment-v0.git
    ```
-2. Set OPEN API keys in .env file (Available on the Azure Portal)
+2. Ajouter un fichier .env dans la racine du projet selon ce qui est indiqué dans template.env
+3. Créer une image Docker unique : Depuis la racine du projet, exécutez la commande suivante :
    ```sh
-   OPENAI_API_BASE=<url>
-   OPENAI_API_KEY=<token>
-   LOGIN_NEO4J=<login>
-   PASSWORD_NEO4J=<password>
+   docker build -t data-dependency-assessment:latest -f backend/Dockerfile .
    ```
-3. Modifier le Dockerfile du back-end pour inclure le front-end : Créez ou modifiez le fichier backend/Dockerfile pour inclure les étapes suivantes :
+4. Vérifiez l'image : Une fois construite, vérifiez que l'image fonctionne correctement en la démarrant :
    ```sh
-    # Étape 1 : Construire le front-end
-    FROM node:16 AS build-frontend
-    WORKDIR /app
-    COPY ./frontend ./
-    RUN npm install && npm run build
-    
-    # Étape 2 : Préparer l'image Flask avec le front-end
-    FROM python:3.10
-    WORKDIR /app
-    COPY ./backend ./
-    COPY --from=build-frontend /app/build ./static
-    RUN pip install --no-cache-dir -r requirements.txt
-    
-    # Commande pour démarrer Flask
-    CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+    docker run -p 5000:5000 --env-file .env data-dependency-assessment:latest
    ```
-
-#### To Launch FRONTEND:
-
-1. Install all the dependencies
-   ```sh
-   cd frontend
-   npm install --force
-   ```
-2. Start frontend
-   ```sh
-   npm start
-   ```
-
-#### To Launch BACKEND
-
-1. Create a virtual env
-   ```
-   python -m venv .venv
-   ```
-
-2. Install all the dependencies
-   ```sh
-   cd backend
-   pip install -r requirement.txt
-   ```
-3. Start backend
-   ```sh
-   flask run
-   ```
+   Accédez à http://localhost:5000 pour valider que tout est fonctionnel.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
