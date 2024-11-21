@@ -1,35 +1,18 @@
-# Utiliser une image Python officielle comme image de base
-FROM python:3.10-slim
-
-# Définir le répertoire de travail dans le conteneur
+# Étape 1 : Construire le front-end
+FROM node:16 AS build-frontend
 WORKDIR /app
+COPY ./frontend ./
+RUN npm install && npm run build
 
-# Installer les dépendances système nécessaires
-RUN apt-get update && apt-get install -y build-essential libffi-dev
+# Étape 2 : Préparer l'image Flask avec le front-end
+FROM python:3.10
+WORKDIR /app
+COPY ./backend ./
 
-# Copier le fichier requirements.txt dans le conteneur
-COPY requirements.txt .
+# Copier tout le build du front-end directement dans le dossier /static
+COPY --from=build-frontend /app/build/* ./static/
 
-# Mettre à jour pip et installer les dépendances Python
-RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier le reste des fichiers de l'application dans le conteneur
-COPY . .
-
-# Exposer le port sur lequel l'application s'exécute
-EXPOSE 5000
-
-# Définir les variables d'environnement
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=5000
-ENV FLASK_ENV=development
-ENV FLASK_DEBUG=1
-
-# Ajouter un utilisateur non privilégié
-RUN adduser --disabled-password appuser
-USER appuser
-
-# Définir la commande pour démarrer l'application
-CMD ["flask", "run"]
+# Commande pour démarrer Flask
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

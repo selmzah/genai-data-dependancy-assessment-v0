@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from http import HTTPStatus
 
-from flask import Flask, request, session, jsonify, Response, send_file
+from flask import Flask, request, session, jsonify, Response, send_file, send_from_directory
 from docx import Document
 from werkzeug.datastructures.file_storage import FileStorage
 from flask_cors import CORS
@@ -11,7 +11,7 @@ from flask_cors import CORS
 from utils.helper import LLMHelper
 from utils.document_generation import create_documentation
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 CORS(app)  # Permet les requêtes CORS depuis le frontend
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')  # Utiliser une clé secrète depuis .env
 
@@ -84,7 +84,13 @@ def explanation_with_graph():
 
         for code in input_code:
             fichier = FileStorage(code)
-            information.append(fichier.read().decode('utf-8'))
+            try:
+                # Essayez de décoder en utf-8 si possible
+                information.append(fichier.read().decode('utf-8'))
+            except UnicodeDecodeError as e:
+                # Gestion de l'erreur de décodage
+                logging.error(f"Unable to decode file: {e}")
+                return jsonify({'error': 'Invalid file encoding. Please provide a UTF-8 encoded text file.'}), HTTPStatus.BAD_REQUEST
 
         main_explanation, function_explanation_functional = llm_helper.explaining_project(information, explanation)
 
@@ -95,6 +101,10 @@ def explanation_with_graph():
             file_name = f"documentation_{formatted_time}.docx"
 
             return send_file(file_path, as_attachment=True, download_name=file_name)
+
+    except Exception as e:
+        logging.error(f"Error explaining code: {e}")
+        return jsonify({'error': 'Failed to explain application'}), HTTPStatus.INTERNAL_SERVER_ERROR
 
     except Exception as e:
         logging.error(f"Error explaining code: {e}")
@@ -125,10 +135,24 @@ def info_functions():
     except Exception as e:
         logging.error(f"Error in chat: {e}")
         return jsonify({'error': 'Failed to process chat'}), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+# Route pour servir l'index.html
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
-if __name__ == '__main__':
+# Route spécifique pour servir les fichiers statiques
+@app.route('/static/<path:path>')
+def serve_static_files(path):
+    return send_from_directory(app.static_folder, path)
+
+if __name__ == "__main__":
     app.run(
         host=os.environ.get('FLASK_RUN_HOST', '0.0.0.0'),
         port=int(os.environ.get('FLASK_RUN_PORT', 5000)),
-        debug=os.environ.get('FLASK_DEBUG', '0').lower() in ['1', 'true', 't']
+        debug=True
     )
