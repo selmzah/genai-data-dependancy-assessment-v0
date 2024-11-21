@@ -54,11 +54,11 @@ TODO
 2. Have access to the Azure Portal
 3. Have Python 3.10 installed
 
-### Installation without docker (front/back)
+### Construire une image Docker pour le back-end avec le front-end inclus
 
 1. Clone the project
    ```sh
-   git clone https://gitlab.lafabric.ovh/gen-ai/data-dependency.git
+   git clone https://github.com/selmzah/genai-data-dependancy-assessment-v0.git
    ```
 2. Set OPEN API keys in .env file (Available on the Azure Portal)
    ```sh
@@ -67,9 +67,24 @@ TODO
    LOGIN_NEO4J=<login>
    PASSWORD_NEO4J=<password>
    ```
-3. Create two terminals :
-   * FRONTEND
-   * BACKEND
+3. Modifier le Dockerfile du back-end pour inclure le front-end : Créez ou modifiez le fichier backend/Dockerfile pour inclure les étapes suivantes :
+   ```sh
+    # Étape 1 : Construire le front-end
+    FROM node:16 AS build-frontend
+    WORKDIR /app
+    COPY ./frontend ./
+    RUN npm install && npm run build
+    
+    # Étape 2 : Préparer l'image Flask avec le front-end
+    FROM python:3.10
+    WORKDIR /app
+    COPY ./backend ./
+    COPY --from=build-frontend /app/build ./static
+    RUN pip install --no-cache-dir -r requirements.txt
+    
+    # Commande pour démarrer Flask
+    CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+   ```
 
 #### To Launch FRONTEND:
 
