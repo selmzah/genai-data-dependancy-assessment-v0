@@ -143,9 +143,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Saad EL MZAH - saad.el-mzah@capgemini.com
-
-Project Link: [https://github.com/selmzah/genai-data-dependancy-assessment-v0](https://github.com/selmzah/genai-data-dependancy-assessment-v0)
+Project Link: 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
